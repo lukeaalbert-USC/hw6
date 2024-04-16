@@ -26,24 +26,23 @@ struct MyStringHash {
         unsigned long long w[5] = {0,0,0,0,0}; //all w vals obtained from grouping of kints, stored from back to front
         int kIntsIndex = 0; //current kint index
         int wIndex = 4; //current w index
-        for (size_t i = k.size()-1; i <= 0; ++i) //for all chars in k, working in reverse order:
+        for (int i = k.size()-1; i >= 0; --i) //for all chars in k, working in reverse order:
         {
             kInts[kIntsIndex] = letterDigitToNumber(k[i]); 
             kIntsIndex++;
             if (kIntsIndex == 6) //iff kInts is full with a 6 length grouping
             {
-                kIntsIndex = 0;
-                w[wIndex] = (36^5 * kInts[0]) + (36^4 * kInts[1]) + (36^3 * kInts[2]) + (36^2 * kInts[3]) + (36^1 * kInts[4]) + (kInts[5]);
-                wIndex--; //move on to next w index
+              kIntsIndex = 0;
+              w[wIndex] = (pow(36,5) * kInts[5]) + (pow(36,4) * kInts[4]) + (pow(36,3) * kInts[3]) + (pow(36,2) * kInts[2]) + (36 * kInts[1]) + (kInts[0]);
+              wIndex--; //move on to next w index
             }
         }
-        for (int i = 0; i < kIntsIndex; ++i) //loop through the remaining;
+        for (int i = 1; i <= kIntsIndex; ++i) //loop through the remaining;
         {
-            w[wIndex] += 36^(kIntsIndex-i) * kInts[i];
+          w[wIndex] += pow(36, (kIntsIndex-i)) * kInts[kIntsIndex-i];
         }
         //at this point, w will be filled in from the reverse order with pairs of 6 gone through the formula
-        std::cout << w[4] << std::endl;
-        HASH_INDEX_T finalHash = (rValues[0] * w[0]) + (rValues[1] * w[1]) + (rValues[2] * w[2]) + (rValues[3] * w[3]) + (rValues[4] * w[4]) + (rValues[5] * w[5]);
+        HASH_INDEX_T finalHash = (rValues[0] * w[0]) + (rValues[1] * w[1]) + (rValues[2] * w[2]) + (rValues[3] * w[3]) + (rValues[4] * w[4]);
         return finalHash;
     }
 
@@ -52,9 +51,9 @@ struct MyStringHash {
     {
             if (isdigit(letter))
             {
-                return letter - 22;
+                return (letter - 22);
             }
-            return tolower(letter) - 65;
+            return tolower(letter) - 97;
     }
 
     // Code to generate the random R values
