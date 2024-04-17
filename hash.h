@@ -22,10 +22,13 @@ struct MyStringHash {
     // hash function entry point (i.e. this is h(k))
     HASH_INDEX_T operator()(const std::string& k) const
     {
+        //declare variables
         int kInts[6] = {0,0,0,0,0,0}; //Kvals corresponding to current char in k, working with groupings formed with reverse order of string k
         unsigned long long w[5] = {0,0,0,0,0}; //all w vals obtained from grouping of kints, stored from back to front
         int kIntsIndex = 0; //current kint index
         int wIndex = 4; //current w index
+
+        //loop through entire kstring, making groups of 6.
         for (int i = k.size()-1; i >= 0; --i) //for all chars in k, working in reverse order:
         {
             kInts[kIntsIndex] = letterDigitToNumber(k[i]); 
@@ -33,14 +36,25 @@ struct MyStringHash {
             if (kIntsIndex == 6) //iff kInts is full with a 6 length grouping
             {
               kIntsIndex = 0;
-              w[wIndex] = (pow(36,5) * kInts[5]) + (pow(36,4) * kInts[4]) + (pow(36,3) * kInts[3]) + (pow(36,2) * kInts[2]) + (36 * kInts[1]) + (kInts[0]);
+              for (int k = 5; k > 0; k--)
+              {
+                w[wIndex] = (w[wIndex] + kInts[k]) * 36;
+              }
+              w[wIndex] = w[wIndex] + kInts[0];
               wIndex--; //move on to next w index
             }
         }
-        for (int i = 1; i <= kIntsIndex; ++i) //loop through the remaining;
+
+        //loop through any leftover groups
+        for (int i = kIntsIndex - 1; i > 0; i--) //loop through the remaining;
         {
-          w[wIndex] += pow(36, (kIntsIndex-i)) * kInts[kIntsIndex-i];
+          w[wIndex] =  (w[wIndex] + kInts[i]) * 36;
         }
+        if (kIntsIndex != 0)
+        {
+          w[wIndex] = w[wIndex] + kInts[0];
+        }
+
         //at this point, w will be filled in from the reverse order with pairs of 6 gone through the formula
         HASH_INDEX_T finalHash = (rValues[0] * w[0]) + (rValues[1] * w[1]) + (rValues[2] * w[2]) + (rValues[3] * w[3]) + (rValues[4] * w[4]);
         return finalHash;
