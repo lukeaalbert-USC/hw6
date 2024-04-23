@@ -274,6 +274,8 @@ private:
     // ADD MORE DATA MEMBERS HERE, AS NECESSARY
     double resizeAlpha_;
     size_t numItems;
+    size_t totalInserts;
+    std::vector<HashItem*> ALLITEMS;
 };
 
 // ----------------------------------------------------------------------------
@@ -296,6 +298,7 @@ HashTable<K,V,Prober,Hash,KEqual>::HashTable(
        : resizeAlpha_(resizeAlpha), hash_(hash), kequal_(kequal), prober_(prober)
 {
   numItems = 0;
+  totalInserts = 0;
   mIndex_ = 0;
   totalProbes_ = 0;
   for (HASH_INDEX_T i = 0; i < CAPACITIES[mIndex_]; i++)
@@ -309,9 +312,9 @@ HashTable<K,V,Prober,Hash,KEqual>::HashTable(
 template<typename K, typename V, typename Prober, typename Hash, typename KEqual>
 HashTable<K,V,Prober,Hash,KEqual>::~HashTable()
 {
-  for (int i = 0; i < table_.size(); i++)
+  for (HASH_INDEX_T i = 0; i < CAPACITIES[mIndex_]; i++)
   {
-    if (table_[i] != nullptr && table_[i] -> deleted == false)
+    if (table_[i] != nullptr)
     {
       delete table_[i];
     }
@@ -336,22 +339,31 @@ size_t HashTable<K,V,Prober,Hash,KEqual>::size() const
 template<typename K, typename V, typename Prober, typename Hash, typename KEqual>
 void HashTable<K,V,Prober,Hash,KEqual>::insert(const ItemType& p)
 {
-  if (!table_.empty() && static_cast<double>(numItems)/CAPACITIES[mIndex_] >= resizeAlpha_)
+  if (!table_.empty() && static_cast<double>(totalInserts)/CAPACITIES[mIndex_] >= resizeAlpha_)
   {
     resize();
   }
+
   HASH_INDEX_T hashIndex = probe(p.first);
   if (hashIndex == npos)
   {
     throw std::logic_error("Hash Index is out of range");
     return;
   }
+  if (table_[hashIndex] != nullptr)
+  {
+    table_[hashIndex] -> item.second = p.second;
+    table_[hashIndex] -> deleted = false;
+    return;
+  }
+
   if (table_[hashIndex] == nullptr)
   {
     numItems++;
+    totalInserts++;
+    HashItem* item = new HashItem(p);
+    table_[hashIndex] = item; //add the new item.
   }
-  HashItem* item = new HashItem(p);
-  table_[hashIndex] = item; //add the new item.
 }
 
 // To be completed
@@ -367,7 +379,6 @@ void HashTable<K,V,Prober,Hash,KEqual>::remove(const KeyType& key)
   if (table_[hashIndex] != nullptr)
   {
     table_[hashIndex] -> deleted = true;
-    delete table_[hashIndex];
     numItems--;
   }
 }
@@ -462,6 +473,11 @@ void HashTable<K,V,Prober,Hash,KEqual>::resize()
     {
       HASH_INDEX_T hashIndex = probe(oldTable[i] -> item.first);
       table_[hashIndex] = oldTable[i];
+    }
+    if (oldTable[i] != nullptr && oldTable[i] -> deleted == true)
+    {
+      delete oldTable[i];
+      totalInserts--;
     }
   }
 }
